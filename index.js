@@ -1,29 +1,30 @@
-const http = require('http');
-const fs = require('fs');
+const express = require('express');
 const path = require('path');
 
+const app = express();
 const port = 8080;
-const hostname = 'localhost';
 
-const server = http.createServer((req, res) => {
-    let filePath = '.' + req.url;
-    if (req.url === '/') { filePath = './index.html'; }
-    else { filePath += '.html' }
+// Serve static files (like HTML) from the root directory
+app.use(express.static(path.join(__dirname)));
 
+// Route for the homepage
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 
-    fs.readFile(filePath, (err, data) => {
+// Dynamic route to serve other pages
+app.get('/:page', (req, res) => {
+    const filePath = path.join(__dirname, `${req.params.page}.html`);
+
+    // Check if the requested file exists
+    res.sendFile(filePath, (err) => {
         if (err) {
-            return fs.readFile('./404.html', (error, errorData) => {
-                res.writeHead(404, { 'Content-Type': 'text/html' });
-                res.end(errorData, 'utf-8');
-            })
+            res.status(404).sendFile(path.join(__dirname, '404.html'));
         }
-        res.writeHead(200, { 'Content-Type': 'text/html' });
-        res.end(data, 'utf-8');
-
     });
 });
 
-server.listen(port, hostname, () => {
-    console.log(`Server running at http://${hostname}:${port}/`);
+// Start the server
+app.listen(port, () => {
+    console.log(`Server running at http://localhost:${port}/`);
 });
